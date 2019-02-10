@@ -1,0 +1,2160 @@
+\input texinfo    @c -*-texinfo-*-
+@comment %**start of header
+@setfilename fem2d.info
+@settitle FEM2D @value{version}
+@setchapternewpage odd
+@comment %**end of header
+
+@set edition 1.2
+@set version 3.0
+@set update-date 26 May 2009
+@set update-month May 2009
+
+@ifinfo
+This file documents FEM2D, a collection of codes developed as tools for
+modeling and post-processing ``plane'' and axisymmetric two dimensional
+finite element analysis problems.
+
+Copyright @copyright{} 1992-2009 Russell Leighton
+
+This is the third edition of the FEM2D documentation.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+@end ifinfo
+
+@titlepage
+@title FEM2D
+@subtitle Two Dimensional Finite Element Analysis
+@subtitle Edition @value{edition}, for FEM2D Version @value{version}
+@subtitle @value{update-month}
+
+@author Russell Leighton
+
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1992-2009 Russell Leighton
+
+@sp 2
+This is the third edition of the FEM2D documentation.
+@sp 2
+
+Permission is granted to make and distribute verbatim copies of this manual
+provided the copyright notice and this permission notice are preserved on
+all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+@end titlepage
+
+@ifnottex
+@node Top
+@top FEM2D
+
+This is Edition @value{edition} of the FEM2D documentation, 
+@w{@value{update-date},} for FEM2D Version @value{version}.
+@end ifnottex
+
+@menu
+* Copying::                     Your rights. 
+* Disclaimer::                  Your responsibility. 
+
+* Introduction::                A brief encounter.
+
+* Usage::                       How to get your feet wet.
+* Command Reference::           The mysteries revealed.
+* Example Problem::             Just to get you started.
+
+* References::                  Give credit where credit is due.
+* Acknowledgments::             My thanks.
+
+* Lin2D::                       The linear solver.
+* Nln2D::                       The nonlinear solver.
+* Post2D::                      The post-processor.
+* Equ2D::                       Some equivalencing never hurt.
+* Opt2D::                       A little optimizer.
+* Rem2D::                       For some additional model cleanup.
+
+* Concept Index::               Look it up here.
+* Command Index::               Where is that command anyway?
+@end menu
+
+@node Copying
+@unnumbered FEM2D Copying Conditions
+@cindex Copying conditions
+@cindex Conditions for copying FEM2D
+@cindex Distribution
+
+Permission is granted to any individual or institution to use, copy, and
+distribute this software, provided that the copyright and permission
+notice is maintained, intact, in all copies and supporting documentation.
+The original distribution of this software must remain intact and
+specifically must include all documentation, supporting software/data, and
+disclaimer.
+
+No charge may be made for distribution, except for costs of media and/or
+shipping.
+
+@node Disclaimer
+@unnumbered Disclaimer
+@cindex Software warranty
+@cindex User's responsibility
+
+This software is provided on an ``as is'' basis without expressed or
+implied warranty.  The author of this code and documentation takes no
+responsibility for inappropriate use of this code and does not warrant the
+code in any fashion.  In other words, use of this code is done solely at
+the users risk and any problems resulting due to misuse or coding errors is
+strictly the users responsibility.
+
+This code was developed for research and educational uses.  Any other use
+of this code (particularly in the areas of design and analysis of direct or
+indirect man-rated systems) without prior verification of the software on
+similar problems is strongly discouraged.  The author of this code is not
+responsible or liable for any consequences or results that occur from the
+use (or misuse) of this code.
+
+@node Introduction
+@chapter Introduction
+@cindex Finite element analysis
+@cindex Features of FEM2D
+
+@code{FEM2D} forms the core of a collection of codes developed to perform
+various analyses on structures using the finite element technique.
+Specifically, @code{FEM2D} is a pre/post-processor used to create two
+dimensional finite element models and to interpret the results from
+subsequent solutions.  It was developed to handle both ``plane'' and
+axisymmetric two dimensional finite element analysis problems.  It is a
+fairly general capability in the sense that a wide variety of two
+dimensional problems can be modeled by @code{FEM2D}.  Other codes are
+included to provide a fairly complete analysis capability.  These codes
+include the solvers (@pxref{Lin2D} and @ref{Nln2D}), a node equivalence
+code (@pxref{Equ2D}), and a node order optimizer (@pxref{Opt2D}).  Of 
+course, the user is free to utilize other utility codes to enhance the
+operation and functionality of this collection.
+
+The main features of the @code{FEM2D} collection are as follows:
+
+@itemize @bullet
+@item two-dimensional plane or axisymmetric problems
+@item cartesian or polar coordinate systems
+@item uses @code{Rexx} macro language
+@item linear and quadratic isoparametric elements available
+@item no limit on number of nodes, elements, materials, or boundary conditions (only limited by memory)
+@item no need to specify problem size (determined at run time)
+@item group (part) definition/manipulation
+@item simple draw commands for symbols, lines, and labels
+@item Dirichlet (constraint) or Neumann (flux), point or distributed boundary conditions
+@item globally or locally referenced material properties
+@item laminated materials
+@item definable post-processing functions
+@item solution and result superposition
+@item command aliases for customized uses
+@item linear and nonlinear (geometric) solvers provided
+@item solvers use a symmetric banded matrix storage format
+@item solvers can handle coupled analyses
+@item node order optimizer for bandwidth reduction
+@item node equivalence code for part ``welding''
+@end itemize
+
+@node Usage
+@chapter Usage
+
+This chapter serves as an introduction into the usage of @code{FEM2D}.
+Briefly, the philosophy behind the operation of the codes and,
+specifically, use of the ``as distributed'' user interface will be 
+discussed.
+
+@menu
+* Coding Philosophy::               or why the complicated mess.
+* Macros and Syntax::               Details, details
+* Modeling Considerations::
+* Element Instability::
+* Post-Processing Accuracy::
+@end menu
+
+@node Coding Philosophy
+@section Coding Philosophy
+
+When I first set out to write a finite element code for the Amiga I decided
+from the very beginning on a programming philosophy.  I was determined to
+utilize what I feel is one of the single greatest advantages of a
+multitasking operating system, that is, the ability to create a complex
+application from simple building blocks, each having a distinct, unique
+capability.  Depending on the user's needs the application could be built
+to suit very specific requirements.  Additionally, each module (program)
+can be designed to handle a particular task very efficiently, making best
+use of available computational resources.  This capability, as I have
+briefly outlined it, was a driver behind the development of many of the
+commands available under the UNIX operating system.  It was felt that
+small, efficient utilitarian codes could be used together to form more
+complicated operations as opposed to developing single large applications.
+In general, UNIX operating system commands allow use of Input/Output
+redirection and piping to ``connect'' the smaller utilities to perform
+complex operations.  Once a user becomes accustomed to making use of this
+ability it can be utilized very effectivily.  Of course, on the Amiga this
+capability also exists, but with the added twist of InterProcess
+Communication (IPC) afforded by the Amiga's Exec kernel.  With the
+implementation of @code{ARexx} as an InterProcess Control Language
+(allowing the user to control IPC), the Amiga has the ability to perform
+unique operations unrealized in any other operating system.  However, even
+on the Amiga, this capability is rarely exploited beyond the control of
+single processes.
+
+Most of the codes that form the @code{FEM2D} collection make extensive use
+of the Amiga's InterProcess Communication (through message ports) which is
+controlled through @code{Rexx} (which is in fact an interpreter running as
+another process with its own message port for IPC).  By utilizing
+@code{Rexx} not only were the above discussed benefits realized but the
+advanced programming constructs available in the REXX language could be
+taken advantage of directly by the individual codes.  In other words, by
+relying on @code{Rexx} there was no need to implement a macro language
+into @code{FEM2D} (programming constructs like conditional 'IF' blocks or
+'DO' loops).  For example, @code{FEM2D} understands the 'node' command and
+expects three numerical arguments.  However, within an @code{Rexx} macro,
+variables and 'DO' loops may be used to generate 'node' commands.
+@code{FEM2D} ``sees'' these as a series of 'node' commands with numeric
+arguments since @code{Rexx} handles the variable interpretation and
+programmatic looping.  Hence, some very complex mesh generation capabilities
+can be built using strictly Rexx commands.  Additionally, since several
+programs can be run simultaneously, each with its own message port, macros
+can be constructed to perform complete analysis functions tailored to the
+requirements of the problem being analyzed.  A fairly general modeling,
+analysis, and results interpretation application can be built just from
+the provided codes and some @code{Rexx} macros.  In fact several have
+already been created and will be described in the following section.
+
+@node Macros and Syntax
+@section Macros and Syntax
+@cindex Command line syntax
+@cindex Rexx macros
+@cindex fem2d.rexx
+
+@code{FEM2D} accepts @code{Rexx} commands passed to its message port
+(address fem2d).  These include all necessary commands to completely define
+the two dimensional finite element model, material properties, and boundary
+conditions.  It is possible (and often most desirable) to create a model
+completely from these commands (saved in an @code{Rexx} macro file).
+The model may be saved to a binary model file which can then be read back 
+into @code{FEM2D} at a later time or read into and processed by a solver 
+(@pxref{Lin2D} and @ref{Nln2D}), post-processor (@pxref{Post2D}),
+or other utility codes.  In turn, the results produced by other codes can
+be saved back into the model file which in turn can be graphically output by
+@code{FEM2D}. 
+
+In general the command line syntax for executing @code{FEM2D} as a
+stand-alone program is:
+
+@example
+    -> [run] fem2d [@var{script}]
+@end example
+
+@noindent
+where @var{script} is the name of an input @code{Rexx} script to be
+processed. If no script is specified then the code will wait until it
+receives a command, presumably from a subsequently executed @code{Rexx}
+command or script.
+
+Commands for @code{FEM2D}, placed in an @code{Rexx} macro, consist of
+a command keyword followed by arguments. The arguments may be separated
+from the command keyword with parentheses and delimited with commas
+(analogous to a function call) or may be separated (and delimited) with
+spaces. If parentheses and commas are used then the command line must be
+surrounded by single quotes or else @code{Rexx} will interpret the command
+as a library function call (rather than a command meant for the host). The
+use of spaces to delimit the command keyword and arguments is recommended
+for most commands, however, the use of parentheses and commas is
+recommended when defining aliases 
+(@pxref{Utility Commands,,Utility Commands - alias}). 
+Also any expressions
+that are meant to be evaluated internally by @code{FEM2D} should be
+surrounded by single quotes 
+(@pxref{Utility Commands,,Utility Commands - set}). 
+For example, the lines below
+show a sequence of @code{Rexx} commands for @code{FEM2D}.
+
+@example
+/* this is a simple example of an Rexx macro for FEM2D */
+
+address fem2d
+
+set 'struct 0'
+set 'la=a2*a3/((1+a3)*(1-2*a3))'
+set 'mu=a2/(2*(1+a3))'
+alias 'iso=mat(a1,0,la+2*mu,la+2*mu,la+2*mu,mu,la,la,0.0,la)'
+alias 'quad4=elem(a1,a2,4,4,a3,a4,a5,a6)'
+
+reset
+problem 'struct'
+axisym
+iso 1 1.0 0.0
+h = 0.25
+do i=0 to 4
+    do j=1 to 5
+        k = i*5 + j
+        node k j*h i*h
+    end
+end
+do i=0 to 3
+    do j=1 to 4
+        k = i*4 + j
+        n = i*5 + j
+        quad4 k 1 n n+1 n+6 n+5
+    end
+end
+@end example
+
+@noindent
+Note that the @code{alias} and @code{set} commands always require
+expressions as arguments (to be evaluated internally by @code{FEM2D}) and,
+therefore, the arguments must be surrounded by single quotes. Also note
+that in the @code{problem} command the argument is also surrounded by
+single quotes since @code{'struct'} is an internally defined variable
+(which is not known to @code{Rexx}). The general rule is to surround
+expressions (which can be single variables), which are to be interpreted
+internally by @code{FEM2D}, with single quotes. Otherwise, expressions
+(and variables) will be interpreted by @code{Rexx} before being sent to
+@code{FEM2D}.
+
+The above example shows the command @code{node k j*h i*h} where @code{i},
+@code{j}, @code{k}, and @code{h} are @code{Rexx} variables. In the first
+pass through the loop containing this command the actual command line
+issued to @code{FEM2D} is @code{node 1 0.25 0.0} which results in the
+creation of node 1 at coordinates (0.25,0.0). For further details on the
+@code{Rexx} macro language the interested reader should refer to texts
+(@pxref{References}) that specifically address the @code{Rexx} language.
+@code{Rexx} is a complete macro programming language and as such cannot
+not be described in adequate detail here. The following section, however,
+describes the commands available within @code{Rexx} macros for use with
+@code{FEM2D}.  A detailed example is also included in a later chapter.
+
+It is important to note that all identification numbers are one based.
+That is all material, node, element and element side identification numbers
+must start at one or greater.
+
+Most examples shown (as well as most of the commands in the scripts
+included) use parentheses and commas to delimit commands and arguments.
+However, this is done only for clarity. In addition, to help clarify
+commands as well as to demonstrate the flexibility of the codes, many of
+the examples show the use of the @code{alias} and @code{set} commands. It
+is through the use of these commands that @code{FEM2D} can be tailored to
+many different engineering applications. More on this will be discussed
+later.
+
+@node Modeling Considerations
+@section Modeling Considerations
+@cindex Matrix solver
+@cindex Bandwidth
+@cindex Negative Jacobians
+@cindex Node order optimizer
+
+Since the stiffness matrix resulting from the finite element
+descretization is generally large, sparse and is always symmetric, storage
+space and computational requirements can be reduced by minimizing the
+bandwidth of the stiffness matrix. The bandwidth of the stiffness matrix
+is directly related to the maximum separation in node order in each
+element. It should be noted that the node ordering, not the assignment of
+node identification numbers, affects the bandwidth. For rectangular grids
+the minimum bandwidth can be achieved by defining the nodes in the
+direction defined by the shorter side. For non-rectangular grids it is not
+so apparent how to order the grid to achieve the minimum bandwidth. A rule
+of thumb is to try to keep the difference between the earliest defined node
+and latest defined node within any element to a minimum. The absolute
+worst ordered grid would be to have an element that contains both the first
+defined node and the last defined node.
+
+It is also important to keep local node numbering within all elements
+ordered in a counterclockwise direction to avoid negative Jacobians. It is
+also good practice to number this way as a habit in order to maintain model
+consistency.
+
+A node order optimizer called @code{Opt2D} is included with this
+distribution. For poorly ordered grids this optimizer can significantly
+reduce the bandwidth and therefore reduce memory requirements and execution
+times. However, for low aspect ratio rectangular grids with well ordered
+nodes the optimizer can increase the bandwidth. Documentation is provided
+for @code{Opt2D}.
+
+@node Element Instability
+@section Element Instability
+@cindex Zero energy modes
+@cindex Rigid body motion
+@cindex Integration rule
+
+All element configurations exhibit ``spurious'' modes (instabilities) which
+can typically be prevented through proper boundary condition specification.
+These modes can be described as zero energy modes where certain nontrivial
+solutions produce no energy. An example of a zero energy mode is rigid
+body motion (translation and/or rotation). Through proper application of
+displacement (Dirichlet) boundary conditions, rigid body motions can be
+prevented. However, some element configurations exhibit additional
+``spurious'' modes some of which render the element unusable. Proper
+selection of element order and number of integration points can prevent
+these extra modes from occurring, however, over-integration is also
+undesirable due to the additional (typically unnecessary) computational
+requirements.
+
+To determine if an element is usable one must solve the eigenvalue problem
+associated with the particular element configuration (that is find all
+eigenvalues and associated eigenvectors that satisfy the equation @code{Ku
+= cu}, where @code{K} is the element stiffness matrix and @code{c} and
+@code{u} are the eigenvalues and eigenvectors). The eigenvectors associated
+with any zero eigenvalues represent a basis defining (spanning) the null
+space of @code{K} (i.e. any vectors contained in this space may be
+represented as a linear combination of the basis vectors defining the
+space). That is these eigenvectors (and any linear combination of these
+vectors), if operated on by @code{K}, result in no reactive force (no
+energy produced). Applying these zero energy eigenvectors to the nodal
+coordinates one obtains a visual representation of the zero energy modes.
+
+To illustrate, consider the vector valued displacement problem using the
+eight node element with a @code{2x2} integration rule. The number of zero
+energy modes, for this element, is four (found by subtracting the rank of
+the element stiffness matrix from its order). These modes correspond to
+the expected three rigid body motions (two translations and one rotation)
+plus an extra ``spurious'' mode. However, this element is still usable
+since this extra mode is not communicable (adjoining elements provide
+constraint against this mode).  It can also be shown that for scalar valued
+problems (such as heat conduction problems) this element is over-integrated
+and exhibits no extra ``spurious'' modes.
+
+For the same element order, but with a @code{3x3} integration rule
+instead, the number of zero energy modes is three which corresponds to the
+three possible rigid body motions. This element is in fact over-integrated
+thereby resulting in no extra ``spurious'' modes but at a cost of doing
+more calculations (and not necessarily gaining any accuracy).
+
+To further illustrate, consider the vector valued displacement problem
+using the nine node element with a @code{2x2} integration rule. The number
+of zero energy modes, for this element, is six. The extra zero energy
+modes found for this element are all ``spurious'' modes some of which are
+communicable thereby rendering this element unusable. With a @code{3x3}
+integration rule this element is over-integrated but is the element of
+choice since the @code{2x2} integration rule results in an unusable
+element.
+
+@node Post-Processing Accuracy
+@section Post-Processing Accuracy
+@cindex Gaussian quadrature
+@cindex Solution accuracy
+
+The accuracy of the results obtained from the finite element method can
+depend heavily on where evaluation of the solution is performed. The
+locations, within a particular element, where the results (based on
+solution derivatives) are the most accurate have been shown to coincide
+with the Gaussian quadrature points with the order of the Gaussian rule
+chosen to be the same as the order of the element. The capability to
+compute results at these locations is an option in the external post-processor
+(@pxref{Post2D} and @ref{Utility Commands,,Utility Commands - select}) 
+and should be used when the solution derivative is known to
+be changing rapidly across an element. Unfortunately, the Gaussian
+quadrature points are typically interior points which do not coincide with
+the nodal point locations. Therefore, if results must be output for nodal
+point locations it is suggested that the mesh be refined in areas where the
+solution derivatives are expected to vary significantly.
+
+@node Command Reference
+@chapter Command Reference
+
+This chapter is included as a reference to the commands available for
+use in @code{Rexx} macros.
+
+@menu
+* Problem Type::                    What kind of problem are we dealing with?
+* Materials::                       What is it made out of?
+* Geometry::                        What does it look like?
+* Boundary Conditions::             How is it loaded?
+* Results Processing::              How about a little data interpretation?
+* Utility Commands::                Just to make life easier
+* Graphic Commands::    ... and more colorful
+@end menu
+
+@node Problem Type
+@section Problem Type
+@cindex Assumptions
+@cindex Restriction of problem
+
+These commands specify the kind of problem to be modeled and the type
+of assumption used to restrict the problem to two dimensions.
+
+@menu
+* problem::                     Problem Kind and Degrees of Freedom
+* plane::                       Plane
+* axisym::                      Axisymmetry
+@end menu
+
+@node problem, plane, Problem Type, Problem Type
+
+@deffn Command problem kind ndof title
+@cindex Problem kind
+@cindex Degrees of freedom
+
+@code{problem} requires an argument specifying the @var{kind} of problem.
+The problem @var{kind} can be set to any desired value.  This value is used
+to associate materials, boundary conditions and solutions (with the
+@var{kind} corresponding to the problem @var{kind}). The second argument
+(@var{ndof}) may be used to specify the number of degrees of freedom per
+node.  For instance, in structural problems (in two dimensions) two
+displacements for each node are the degrees of freedom.  In thermal (heat
+conduction) problems one temperature for each node is solved for.  The final
+argument is used to set the problem @var{title}.
+
+@example
+'problem 0 1 "Heat Transfer"'
+@end example
+@end deffn
+
+@node plane, axisym, problem, Problem Type
+
+@deffn Command plane
+@cindex Plane assumption
+
+@code{plane} is used to specify a ``plane'' assumption (i.e. the
+problem solution is independent of the out-of-plane direction). There are
+no arguments to @code{plane}.
+@end deffn
+
+@node axisym, (dir), plane, Problem Type
+
+@deffn Command axisym
+@cindex Axisymmetry
+
+@code{axisym} is used to specify an axisymmetric assumption (i.e. the
+problem solution is independent of the circumferential direction). There
+are no arguments to @code{axisym}.
+@end deffn
+
+@node Materials
+@section Materials
+@cindex Material properties
+
+The following commands are used for specification of material properties.
+
+@menu
+* mat::
+* lam::
+@end menu
+
+@node mat, lam, Materials, Materials
+
+@deffn Command mat id type C[10] ckind f[2] ref ckind f[2] ref
+@cindex Material identification number
+@cindex Stiffness coefficients
+@cindex Body force coefficients
+@cindex Reference values
+@cindex Coupling analyses
+
+@code{mat} requires specification of the material identification
+number (@var{id}), material @var{type}, 
+material coefficients (@var{C[10]}), and two sets
+of body force terms consisting of couple problem kind (@var{ckind}), body force
+coefficients (@var{f[2]}), and reference value (@var{ref}).
+
+The material @var{type} currently has two possible meaningful values.
+If the value is set to zero (0) then the material properties are referenced
+to the global coordinate system.  If the value is set to one (1) then the
+material properties are referenced to the local element coordinate
+system (@pxref{Geometry}).  The latter choice is useful for defining non-isotropic material 
+properties whose principal orientation varies with element orientation
+(for example, a filament wound composite bottle) and is especially useful
+when used in conjunction with the @code{lam} command 
+(@pxref{Materials,,Materials - lam}).
+
+The couple problem kind may be specified in order to couple the solution
+from a previous analysis with the body force coefficients used in the
+current analysis.  If no coupling is desired then these values should be
+set to the current problem kind 
+(@pxref{Problem Type,,Problem Type - problem}).  The body force coefficients are used to
+define properties associated with body forces.  The reference value can be
+used to specify a reference temperature, species concentration, etc.  A
+reference temperature, for example, could be used to determine a change in
+temperature due to heat conduction thereby coupling the solution obtained
+from a heat transfer analysis with a structural analysis.
+
+The use of these values is dependent on the solver (@pxref{Model Requirements,,Lin2D - Model Requirements})
+used to calculate a solution. Therefore, to determine what is
+required for input the documentation for the specific solver must be
+consulted. 
+
+@example
+'set la=a2*a3/((1+a3)*(1-2*a3))'
+'set mu=a2/(2*(1+a3))'
+'alias iso=mat(a1,0,la+2*mu,la+2*mu,la+2*mu,mu,la,la,0.0,la)'
+'iso(1,10.e6,0.32)'
+@end example
+@end deffn
+
+@node lam, (dir), mat, Materials
+
+@deffn Command lam id mid frac mang
+@cindex Material identification number
+@cindex Lamina properties
+@cindex Laminate properties
+@cindex Transversely isotropic material
+
+@code{lam} requires specification of the laminate identification
+number (@var{id}),
+reference material identification (@var{mid}), fraction of laminate
+(@var{frac}), and lamina material angle (@var{mang}).
+
+This command is used to define a laminate by building up laminae.  Each
+lamina is defined by a single instance of @code{lam}.  Subsequent
+@code{lam} commands issued with the same laminate identification number
+will add laminae to any current laminate sequence.  The
+reference material identification number must refer to an existing
+material.  It is assumed that the reference material is at most a
+transversely isotropic material (the material properties are invariant only
+in the 2-3 plane).  This also implies that the primary (1) direction is the
+principal material direction (the stiffer or fiber direction).  The
+@var{frac} argument is used to specify the fraction that this lamina takes
+in the overall thickness of the laminate.  The total sum of all the
+@var{frac} arguments for every lamina defined in the laminate should equal
+1.0.  The lamina material angle (@var{mang}) is used to define the fiber
+orientation (in the 1-3 material plane).  This material angle may be
+defined as a constant value or as a function specified by name (previously
+defined by the @code{set} command, 
+@pxref{Utility Commands,,Utility Commands - set}).
+This capability to specify a
+function for the fiber angle can be used to effectively model filament
+wound composite pressure vessels with domes where the fiber angle varies
+with position along the dome.
+
+@example
+'set fang1=asin(1.7365/r0)'
+'set fang2=-fang1'
+'lam 2 0 8 1/2 fang1'
+'lam 2 0 8 1/2 fang2'
+'lam 7 0 8 1/3  20.0'
+'lam 7 0 8 1/3 -20.0'
+'lam 7 0 8 1/3 90.0'
+@end example
+@end deffn
+
+@node Geometry
+@section Geometry
+@cindex Model geometry
+@cindex Node order
+
+@comment @ifinfo
+@comment The following commands are used to create the geometry of the model in
+@comment terms of nodes and elements. For element specification the nodes must be
+@comment specified in the order shown in 
+@comment @w{@@@{"elements.iff" Link "fem2d:doc/elements.iff/main"@}}.
+@comment @end ifinfo
+@comment @tex
+@comment \input iff
+@comment \def\figure#1 #2 #3(#4,#5) #6{
+@comment     \midinsert
+@comment     \centerline{\ifffile #2 #3(#4,#5)}
+@comment     \vskip 0.2in
+@comment     \centerline{Figure #1 -- #6}
+@comment     \endinsert
+@comment }
+@comment The following commands are used to create the geometry of the model in
+@comment terms of nodes and elements. For element specification the nodes must be
+@comment specified in the order shown in figure 1.
+@comment \figure1 fem2d:doc/elements.iff threshold(4.6in,3.2in) {Element Maps}
+@comment @end tex
+
+@menu
+* node::                        The basic building block
+* elem::                        How to connect them nodes
+@end menu
+
+@node node, elem, Geometry, Geometry
+
+@deffn Command node id x y
+@cindex Node identification number
+@cindex Coordinate pair
+
+@code{node} will create a node located at a specified coordinate.  The
+arguments are the node identification number (@var{id}) and the coordinate
+pair (@var{x}, @var{y}).  The coordinate pair is interpreted depending on
+the coordinate setting 
+(@pxref{Utility Commands,,Utility Commands - coord}).  
+If the coordinate is not given
+then the node will be placed at (0,0). If the identification number is not
+given (or is zero) the next largest node number will be used.
+
+@example
+'node(1,0.5,1.0)'
+@end example
+@end deffn
+
+@node elem, (dir), node, Geometry
+
+@deffn Command elem id mat nnodes nint nodes[9]
+@cindex Element identification number
+@cindex Material identification number
+@cindex Node identification number
+@cindex Isoparametric shape functions
+@cindex Integration points
+
+@code{elem} is used to create elements based on isoparametric shape
+functions.  The required arguments are the element identification number
+(@var{id}), material identification number (@var{mat}, referring to an
+existing material), number of nodes (@var{nnodes}), number of integration
+points (@var{nint}) and the node numbers (@var{nodes[9]}, also referring to
+existing nodes). The following are possible element specifications.
+
+@example
+@group
+nnodes  nint   order       shape    integration rule
+
+     3     1   linear      tri      1 point 
+     6     1   quadratic   tri      1 point 
+     6     3   quadratic   tri      3 point 
+     4     1   linear      quad     1 point 
+     4     4   linear      quad     2x2 point 
+     8     1   quadratic   quad     1 point   (not recommended)
+     8     4   quadratic   quad     2x2 point 
+     8     9   quadratic   quad     3x3 point 
+     9     1   quadratic   quad     1 point   (not recommended)
+     9     4   quadratic   quad     2x2 point 
+     9     9   quadratic   quad     3x3 point 
+@end group
+@end example
+
+If the material number is not given then material one will
+be used. If the identification number is not given (or is zero) the next
+largest element number will be used.  It should be pointed out that some
+combinations of element order and integration order result in element 
+instabilities whose effect can be highly dependent on the problem being solved 
+(@pxref{Element Instability} for more information).
+
+@example
+'alias quad4=elem(a1,a2,4,4,a3,a4,a5,a6)'
+'quad4(1,1,1,2,3,4)'
+@end example
+@end deffn
+
+@node Boundary Conditions
+@section Boundary Conditions
+@cindex Boundary condition specification
+
+The following commands allow specification of the boundary conditions.
+A sufficient specification of the boundary conditions is necessary to
+result in a solvable problem. If during the solve phase of the analysis an
+error occurs it is most likely due to insufficient or improper application
+of boundary conditions.
+
+@menu
+* pbc::                         Point (nodal) boundary conditions
+* dbc::                         Distributed (element) boundary conditions
+@end menu
+
+@node pbc, dbc, Boundary Conditions, Boundary Conditions
+
+@deffn Command pbc node type dir val
+@cindex Node identification number
+@cindex Boundary condition type
+@cindex Boundary condition direction
+
+@code{pbc} specifies boundary conditions applied at nodes.  This boundary
+condition may be either a Dirichlet or flux type boundary condition.  The
+first argument is the identification number for the node at which the
+boundary condition is applied (@var{node}).  The second argument is used to
+specify the @var{type} of boundary condition.  A Dirichlet boundary condition
+is @var{type} 1.  A flux boundary condition is @var{type} 2.  
+The next argument is
+used to specify the global direction (@var{dir}) for the boundary condition.
+For scalar boundary conditions use 1.  For vector boundary
+conditions use 1 or 2 to specify the global direction (1 for @code{x} or
+@code{r}, 2 for @code{y} or @code{z}). The last argument is the boundary
+condition value (@var{val}).  If not specified then the boundary condition
+will be removed (if it exists).
+The defined boundary condition will be associated with the currently set 
+problem kind (@pxref{Problem Type,,Problem Type - problem}).
+
+@example
+'alias dispx=pbc(a1,1,1,a2)'
+'dispx(5,0.0)'
+'alias forcr=pbc(a1,2,1,a2)'
+'forcr(10,100.0)'
+'alias temp=pbc(a1,1,1,a2)'
+'temp(2,77)'
+@end example
+@end deffn
+
+@node dbc, (dir), pbc, Boundary Conditions
+
+@deffn Command dbc elem type dir side val[3]
+@cindex Element identification number
+@cindex Boundary condition type
+@cindex Boundary condition direction
+@cindex Element side number
+
+@code{dbc} specifies boundary conditions applied along element
+sides. This boundary condition may be either Dirichlet or flux @var{type}
+boundary conditions. The first argument is the identification number for
+the element (@var{elem}). The second argument is used to specify the @var{type} 
+of boundary condition. A Dirichlet boundary condition is @var{type} 1. A flux 
+boundary condition is @var{type} 2.  The next argument is used to specify
+the local direction @var{dir} for the boundary condition. For scalar boundary
+conditions use 1. For vector boundary conditions use 1 or 2 to specify the
+local direction (1 for normal to element side, 2 for tangent to element
+side). The next argument is the element @var{side} number. The succeeding 
+arguments specify the value of the boundary condition at each nodal location 
+(@var{val[3]}). If one value is specified the boundary
+condition value is assumed to be constant across the element side. If two
+or more values are given the value will vary either linearly or quadraticly
+depending on the order of the element. If no values are specified then the
+boundary condition will be removed (if it exists).
+The defined boundary condition will be associated with the currently set 
+problem kind (@pxref{Problem Type,,Problem Type - problem}).
+
+@example
+'alias press=dbc(a1,2,1,a2,a3)'
+'press(20,1,-1000.0)'
+'alias slope=dbc(a1,1,1,a2,a3)'
+'slope(12,3,0.0)'
+@end example
+@end deffn
+
+@node Results Processing
+@section Results Processing
+@cindex Post-process
+
+These commands are included to evaluate results as specific locations
+as well as to select result functions for processing through an external
+post-processor (@pxref{Post2D}).
+
+@menu
+* select::                      Select results for subsequent post-processing
+* eval::                        Evaluate results at a point
+@end menu
+
+@node select, eval, Results Processing, Results Processing
+
+@deffn Command select function location
+@cindex Solution evaluation
+@cindex Result processing
+@cindex Gaussian quadrature
+
+Given a solution calculated by a solver (@pxref{Lin2D} and @ref{Nln2D})
+@code{select} will select functions to be subsequently used to post-process
+the solution (@pxref{Post2D}).  Any previously defined @var{function}
+(@pxref{Utility Commands,,Utility Commands - set}) 
+may be given in the first argument.  The second argument
+indicates where the solution will be evaluated in each element
+(@var{location}).  If @code{gauss} is specified then the solution will be
+processed at the Gaussian quadrature points.  If @code{node} is specified
+then processing will occur at the node locations.  Finally, if @code{ave}
+is specified then the solution will be processed at the nodes and averaged
+across element boundaries (unless it is a material boundary).  If this
+argument is not given then @code{gauss} is assumed.  More accurate
+stress/strain results (for that matter any result based on solution
+derivatives) can be expected using the @code{gauss} option.  No results are
+actually calculated until the model is processed through the
+post-processor.
+
+@example
+'set flux=-c1*(x1*x1+y1*y1)^0.5'
+'select(flux,ave)'
+@end example
+@end deffn
+
+@node eval, (dir), select, Results Processing
+
+@deffn Command eval expr elem np xi yi
+@cindex Expression evaluation
+@cindex Solution evaluation
+@cindex Local node number
+@cindex Gaussian quadrature
+@cindex Local coordinates
+
+Given a solution calculated by a solver (@pxref{Lin2D} and @ref{Nln2D})
+@code{eval} is used to evaluate the solution at specified locations. Any
+valid expression 
+(@pxref{Utility Commands,,Utility Commands - set}) 
+may be given in the first argument (@var{expr}). The
+second argument, if given, specifies the element (@var{elem}) by order number 
+(greater than or equal to zero) or by identification number (less than zero). 
+The third argument (@var{np}) indicates either the local node number (greater 
+than zero), the Gaussian quadrature point (less than zero) or if given as zero 
+the next two arguments are used to specify the local coordinates 
+(@pxref{Geometry}).
+If the element number (and all subsequent arguments) are not given then the
+expression will be evaluated as a stand-alone expression (no solution
+values will be valid). In this way @code{eval} may be used as an online
+calculator (though somewhat limited). The computed value for the specified 
+location and the expression given is returned in RESULT (assuming 
+@code{options results} is used in the macro).
+
+@example
+'eval(sig1,101,0,0.0,0.0)'
+@end example
+@end deffn
+
+@node Utility Commands
+@section Utility Commands
+
+These commands are included for additional capability.
+
+@menu
+* save::                        Save everything to a file
+* read::                        Read everything from a file
+* coord::                       Set coordinate system
+* reset::                       Deallocate memory
+* check::                       Perform simple model check
+* info::                        Get information on model
+* version::                     Get version and compilation date
+* stop::                        Stop program
+* set::                         Set function or variable value
+* get::                         Get function or variable value
+* group::                       Group manipulation
+* alias::                       Define command alias
+* why::                         Return last error message
+@end menu
+
+@node save, read, Utility Commands, Utility Commands
+
+@deffn Command save file
+@cindex Interchange File Format (IFF)
+@cindex Binary file
+
+The complete model, problem type, material properties, geometry,
+boundary conditions, solutions, results, functions and aliases may be saved to a
+file using @code{save}. The file format used is an Interchange File
+Format (IFF) type developed specifically for this code. It is a binary
+file format and therefore cannot be edited conventionally. The only
+argument to this command is the name of the @var{file} to store the data.
+
+@example
+'save(ram:model.dat)'
+@end example
+@end deffn
+
+@node read, coord, save, Utility Commands
+
+@deffn Command read file
+@cindex Binary file
+
+The file produced by the @code{save} command 
+(@pxref{Utility Commands,,Utility Commands - save}) 
+can be read
+in by @code{read}. The only argument to this command is the name of the
+@var{file} containing the data.
+
+@example
+'read(results.dat)'
+@end example
+@end deffn
+
+@node coord, reset, read, Utility Commands
+
+@deffn Command coord system xorg yorg
+@cindex Cartesian coordinate system
+@cindex Polar coordinate system
+@cindex Coordinate system origin
+
+@code{coord} sets the coordinate @var{system} to either the cartesian or
+polar coordinate systems.  It also allows specification of the coordinate
+system origin (@var{xorg}, @var{yorg}).  @code{coord} affects all commands
+that accept or return coordinate data.
+It should be noted that even if a model is not inherently cylindrical many 
+circular features can be modeled more effectively using the polar coordinate 
+system (with an origin offset). The coordinate system may be changed at any 
+point during the modeling process with no effect on previously issued commands.
+
+@example
+'coord(polar,5,5)'
+@end example
+@end deffn
+
+@node reset, check, coord, Utility Commands
+
+@deffn Command reset flag function
+@cindex Memory deallocation
+@cindex Starting a new problem
+
+@code{reset} will selectively clear (deallocate) memory.  If no arguments
+are given then all memory will be deallocated except for functions and
+aliases.  This should always be done before starting a new problem.  If
+@code{all} is specified for the @var{flag} then all memory is deallocated. 
+Specifying @code{solutions}, @code{groups}, @code{functions} or
+@code{aliases} for the @var{flag} will deallocate the associated sections
+of memory.  If @code{results} is specified for the @var{flag} then the next
+argument (if given) indicates the @var{function} name of the result to
+deallocate.  If this argument is not given then all results are
+deallocated.
+
+@end deffn
+
+@node check, info, reset, Utility Commands
+
+@deffn Command check
+@cindex Model integrity
+@cindex Model statistics
+@cindex Errors
+@cindex Rigid body motion
+
+@code{check} will perform a check of model integrity. It will check
+for undefined nodes, elements and materials over elements and boundary
+conditions. These checks do not insure that the resulting system will be
+solvable, nor does it insure that element mapping is invertible (a
+necessary condition). However, if errors occur during formation of the
+global stiffness matrix that is generally an indication that the mesh is
+malformed, therefore, check the model for elements that are misshapen or
+misnumbered. Also, if errors occur in the solver check the boundary
+conditions for completeness (do not allow rigid body motion or rotation).
+Model statistics and memory requirements will also be output with this
+command. There are no arguments to @code{check}.
+
+@end deffn
+
+@node info, version, check, Utility Commands
+
+@deffn Command info
+@cindex Model information
+
+@code{info} gives information on the overall model and optionally on
+materials, nodes, elements, boundary conditions, solutions, groups and
+window settings. If no argument is given then the number of nodes,
+elements, groups and solutions is returned in the @code{Rexx} variable
+@var{RESULT} (assuming @code{options results} is used).
+
+@deffnx Command info "mat" n
+@cindex Material information
+
+If the first argument is @code{mat} then information is returned for the
+material specified by the second argument. A material is referenced by its
+identification number and by the currently specified problem kind
+(@pxref{Problem Type,,Problem Type - problem}). 
+The data returned is the material order number, material
+id, type, kind, material coefficients (10), and two sets of body force
+terms consisting of the couple problem kind, body force coefficients (2),
+and reference value. 
+
+@deffnx Command info "node" n
+@cindex Node information
+
+If the first argument is @code{node} then information is returned for the
+node specified by the second argument. A node can be referred to by its
+order number or assigned identification number (the number you originally
+assigned). In this way information can be obtained without knowledge of the
+original assigned numbering. If the order number is used then the argument
+must be positive (or zero since order numbers are zero based). Otherwise,
+negative numbers are interpreted as identification numbers (indicated by
+the absolute value). 
+If @var{max} is specified for the second argument
+then information will be returned for the node with the maximum identification
+number.  If @var{last} is specified then information is returned for the
+node last defined.
+The data returned is the order number, node id, and
+the node x,y coordinates (referenced to the coordinate origin). If the
+polar coordinate system is set 
+(@pxref{Utility Commands,,Utility Commands - coord}) 
+then the coordinate data
+returned will be in polar form (a radius and angle, referenced to the
+coordinate system origin). 
+
+@deffnx Command info "elem" n
+@cindex Element information
+
+If the first argument is @code{elem} then information is returned for the
+element specified by the second argument. An element can be referred to by
+its order number or assigned identification number (the number you
+originally assigned, as above). 
+If @var{max} is specified for the second argument
+then information will be returned for the element with the maximum identification
+number.  If @var{last} is specified then information is returned for the
+element last defined.
+The data returned is the order number,
+element id, material id, number of nodes, and the node order
+numbers (not the node ids). 
+
+@deffnx Command info "pbc" dof n
+@cindex Point boundary condition information
+
+If the first argument is @code{pbc} then information is returned for the
+point boundary condition on the node specified by the second argument (see
+above) for the degree of freedom specified. The data returned is the node
+order number, node id, boundary condition type, kind, degree of freedom,
+and the boundary condition value. If no boundary conditions (associated
+with the current problem kind) exist for the node then only the node order
+number and node identification number are returned. 
+
+@deffnx Command info "dbc" dof n side
+@cindex Distributed boundary condition information
+
+If the first argument is @code{dbc} then information is returned for the
+distributed boundary condition on the element, side, and degree of freedom
+specified. The data returned is the element order number, element id,
+element side, boundary condition type, kind, degree of freedom, and the
+boundary condition values (one for each node along the element side).  If
+no boundary conditions (associated with the current problem kind) exist for
+the element side then only the element order number, identification number,
+and side are returned. 
+
+@deffnx Command info "soln" dof n
+@cindex Solution information
+
+If the first argument is @code{soln} then a solution value is returned for
+the degree of freedom and node specified. The data returned is the node
+order number, node id, and solution value (associated with the current
+problem kind). 
+
+@deffnx Command info "result" name
+@cindex Result information
+
+If the first argument is @code{result} then information on results is
+returned. The second argument (if specified) is the function name of the result.
+The data returned is the result kind, number of degrees of freedom, location flag,
+the minimum and maximum computed result values. If the
+function name is not specified then a list of result function names is returned.
+If any names are prepended with an @code{*} then that result has computed
+values otherwise the result function is only selected (ready for post-processing,
+@pxref{Post2D}).
+
+@deffnx Command info "functions"
+@cindex Function information
+
+If the first argument is @code{function} then 
+a list of defined function names is returned.
+
+@deffnx Command info "group" name
+@cindex Group information
+
+If the first argument is @code{group} then information on groups is
+returned. The second argument (if specified) is the name of the group.
+The data returned is the number of nodes contained in the group. If the
+group name is not specified then a list of group names is returned.
+
+@deffnx Command info "window"
+@cindex Window information
+
+If the first argument is @code{window} then data is returned containing the
+window maximum and minimum coordinates in the form of xmin, xmax, ymin,
+ymax (as specified in the @code{window} command).
+
+@end deffn
+
+@node version, stop, info, Utility Commands
+@deffn Command version
+
+@code{version} returns the version and the compilation date and time
+for @code{FEM2D}.
+
+@end deffn
+
+@node stop, set, version, Utility Commands
+
+@deffn Command stop
+@cindex Stopping the code
+
+@code{stop} will signals the code to exit thereby removing
+the code from memory. Any subsequently issued macros that reference 
+this program will fail unless it is restarted. There are no arguments to
+@code{stop}.
+
+@end deffn
+
+@node set, get, stop, Utility Commands
+
+@deffn Command set function expr
+@cindex Expressions
+@cindex Functions
+@cindex Variables
+@cindex Storing intermediate data
+@cindex Exchanging data between macros
+@cindex Post-process solution data
+@cindex Pre-defined variables
+
+@code{set} is used to define functions used to post-process solution data
+and to store intermediate data for exchange between macros.  Pre-defined
+variable names may be used in the function expression (@var{expr}) as well
+as any other defined @var{function} names.  Material coefficients may be
+referenced by using the pre-defined variables, @var{c1} through @var{c10}
+(the global material properties),
+which refer to the coefficients as input in the @code{mat} command
+and @var{l1} through @var{l10} (the local
+lamina material properties) which refer to transformed coefficients referenced
+to the local element orientation.  The latter variables will only be defined
+for laminates (defined by the @code{lam} command) and will vary depending
+on location within the laminate (the material angle used to transform
+the properties is obtained from the lamina at the specified location).  
+Also, element and material angles may be used through the predefined variables
+@var{m1} and @var{m2}.  The variable @var{m1} will contain the element
+principal orientation and @var{m2} will contain the lamina material angle (in degrees).
+Both of these angles will vary with location and are most useful for transforming
+results to coincide with these natural orientations (for example, they could
+be used to calculate the fiber stress in a composite laminate).
+Body force components may be accessed through the pre-defined variables,
+@var{f1} through @var{f4} (@pxref{Materials,,Materials - mat}).  Additionally,
+the variables @var{p1} and @var{p2} are defined as the local parametric
+coordinates of the element and range from 0.0 to 1.0 (note that these coordinates
+may be used to interpolate within an element and only make sense when a function
+is evaluated within an element, @pxref{Results Processing,,Results Processing - eval}).
+The pre-defined variables for @code{plane} 
+(@pxref{Problem Type,,Problem Type - plane}) 
+problems are:
+
+@example
+u# - solution value 
+x# - solution derivative with respect to 'x' or 'x' coordinate
+y# - solution derivative with respect to 'y' or 'y' coordinate
+@end example
+
+The pre-defined variables for @code{axisym} 
+(@pxref{Problem Type,,Problem Type - axisym}) 
+problems are:
+
+@example
+u# - solution value
+r# - solution derivative with respect to 'r' or 'r' coordinate
+z# - solution derivative with respect to 'z' or 'z' coordinate
+t# - solution derivative with respect to 't'
+@end example
+
+Where the # symbol is replaced by the desired degree of freedom or is
+specified as zero (0) if coordinate values are desired.
+
+The function expression (@var{expr}) may be any valid algebraic expression which can
+contain any combination of operators, pre-defined variables and other
+defined functions. The expressions may also contain parenthesized
+sub-expressions, nested to any level. The allowed operators are @code{+},
+@code{-}, @code{*}, @code{/}, and @code{^} (real exponent). Also built-in
+functions @code{abs}, @code{sin}, @code{cos}, @code{tan}, @code{asin}, @code{acos}, 
+and @code{atan} (which takes two arguments
+separated by a comma) are available as well as the variable
+@code{pi}.  Note that all angle arguments for all functions and the return values from 
+the @code{asin}, @code{acos}, and @code{atan} functions are in degrees.
+
+The @var{function} name may be given as the first argument or as the left hand
+side of the expression separated by an @code{=}. The latter option should
+be used for functions while the previous option should be used for defining
+constants. Also, no parentheses should be used to delimit the arguments
+because of possible conflicts with parentheses used in functions.
+
+@example
+'set tau12=(0.25*(sigr-sigz)^2+taurz^2)^0.5'
+'set sigf=cos(m2)*cos(m2)*sigz+sin(m2)*sin(m2)*sigt'
+'set material 2'
+@end example
+@end deffn
+
+@node get, group, set, Utility Commands
+
+@deffn Command get function
+@cindex Functions
+@cindex Variables
+@cindex Constants
+@cindex Aliases
+
+@code{get} is used to retrieve a @var{function} or alias expression defined
+by the @code{set} 
+(@pxref{Utility Commands,,Utility Commands - set}) 
+and @code{alias} 
+(@pxref{Utility Commands,,Utility Commands - alias}) 
+commands.
+The argument is the @var{function} or alias name. The @var{function} or alias
+expression is returned in the @code{Rexx} variable @var{RESULT} (assuming
+that @code{options results} was specified in the macro).
+
+@example
+'get(material)'
+@end example
+@end deffn
+
+@node group, alias, get, Utility Commands
+
+@deffn Command group
+
+The @code{group} commands allow for manipulation of groups of nodes and
+associated elements. In general, groups are composed of nodes only,
+however, elements and boundary conditions associated with nodes contained
+in a group will be affected by group manipulation. Group names may be any
+length, but only the first nine characters are significant. 
+
+@deffnx Command group name "add" n1 n2
+@cindex Group addition
+
+The @code{add} option is used for group creation.  If the group specified
+(@var{name}) does not exist then a new group is created otherwise the
+existing group will be added to.  The two subsequent arguments specify the
+nodes (by identification number) to be added as a sequence of nodes
+starting with node @var{n1} and ending with node @var{n2}.  If @var{n2} is
+given as zero then all nodes starting at @var{n1} up to the last node in the
+model will be added.
+
+@deffnx Command group name "rem" n1 n2
+@cindex Group removal
+
+The @code{rem} option is used to remove nodes from an existing group
+(@var{name}).  This command is not destructive (no nodes are deleted). The
+two subsequent arguments specify the nodes (by identification number) to be
+removed as a sequence of nodes starting with node @var{n1} and ending with
+node @var{n2}.  If @var{n2} is given as zero then all nodes starting at
+@var{n1} up to the last node in the model will be removed.
+
+@deffnx Command group name "tran" x1 y1 x2 y2
+@cindex Group translation
+
+The @code{tran} option is used to translate an existing group (@var{name}).
+The subsequent arguments specify the starting coordinate (@var{x1},
+@var{y1}) and ending coordinate (@var{x1}, @var{y1}) for the translation.
+These coordinates are specified in either cartesian or polar form depending
+on the setting given in the @code{coord} command 
+(@pxref{Utility Commands,,Utility Commands - coord}).  
+It should be noted that the meaning of ``translation'' is different depending
+on the coordinate form.  In cartesian coordinates a translation is defined
+as a movement in the global @code{x} and @code{y} directions.  In polar
+coordinates a translation is defined as a movement in the radial and
+angular directions.  This effectively will result in rotation, translation
+and scaling in the most general use.  This feature can be utilized with
+great effectiveness if used properly.
+
+@deffnx Command group name "del"
+@cindex Group deletion
+
+The @code{del} option is used to delete nodes contained in an existing
+group (@var{name}). This command is destructive (so beware). All nodes and associated
+elements and boundary conditions will be deleted from the model.
+
+@deffnx Command group name "save" file
+@cindex Saving groups
+
+The @code{save} option is used to save a group (@var{name}) to an IFF binary file
+(@pxref{Utility Commands,,Utility Commands - save}). 
+Only nodes and associated elements (elements whose nodes
+are all contained in the group) are saved.
+
+@deffnx Command group name "read" file
+@cindex Reading groups
+
+The @code{read} option is used to read in a group from an IFF binary file
+(@pxref{Utility Commands,,Utility Commands - read}). 
+If the named group (@var{name}) exists then the nodes (and elements)
+read in will be added to the group. If the group does not exist a new
+group will be created. The node (and element) identification numbers will
+start after the maximum identification number in the current model (in
+other words, no nodes or elements will be overwritten).
+
+@deffnx Command group name "off"
+
+The @code{off} option is used to remove a group temporarily.
+If a group is ``turned off'' most subsequent element operations will ignore 
+elements contained in this group.  Additionally,
+results will not be calculated by the
+post-processor (@pxref{Post2D}) for any of the associated elements.
+
+@deffnx Command group name "on"
+
+The @code{on} option is used to return a group to the processing
+list.  Subsequent element operations will now effect this group.
+Additionally, post-processing will result in values being calculated
+for the associated elements.  Note that if results were calculated previously
+with the group ``turned off'' then no results are available for the affected
+group even if the group is ``turned on''.  In this case, the result function 
+would have to be reselected 
+(@pxref{Results Processing,,Results Processing - select}) 
+and the model post-processed (@pxref{Post2D}).
+
+@end deffn
+
+@node alias, why, group, Utility Commands
+
+@deffn Command alias name expr
+@cindex Aliases
+@cindex Functions
+@cindex Variables
+@cindex Pre-defined variables
+
+@code{alias} is used to create aliases for built-in commands. In this
+manner @code{FEM2D} may be customized to many different applications.
+Aliases are defined through the use of the pre-defined variables @var{a1} through
+@var{a#}. These pre-defined variables contain the argument entries of the alias
+command. For example, the alias @code{iso} shown below will have its
+arguments placed in the pre-defined variables @var{a1} through @var{a3}. These
+arguments are then used in the alias definition as well as in functions
+used in the alias definition. In this case, an isotropic material
+definition command was created from the more complex @code{mat} command.
+In actual use the @code{iso} alias command might look like the following.
+
+@example
+'set la=a2*a3/((1+a3)*(1-2*a3))'
+'set mu=a2/(2*(1+a3))'
+'alias iso=mat(a1,0,0,la+2*mu,la+2*mu,la+2*mu,mu,la,la,0.0,la)'
+'iso(1,10.e6,0.3)'
+@end example
+
+Note that functions may be used in aliases with no restrictions (although
+some uses may not make any sense). Aliases, however, may not be used in
+other aliases or functions.  Also note that functions containing the
+pre-defined variables @var{a1} through @var{a#} only make sense when used
+with aliases.  
+@end deffn
+
+@node why, (dir), alias, Utility Commands
+
+@deffn Command why
+@cindex Error message
+
+@code{why} will return the last error message associated with an
+error condition in the @code{Rexx} variable @var{RESULT} (assuming
+@code{options results} is used in the macro). If an error occurs the
+@code{Rexx} variable @var{RC} will contain a severity level. Refer to
+references on the @code{Rexx} language for details on error handling
+(@pxref{References}). Upon receiving an error condition this command can
+be used to help determine what error actually occurred. 
+@end deffn
+
+@node Graphic Commands
+@section Graphic Commands
+@cindex Graphical interface
+
+The following commands comprise the graphical functions
+builtin to @code{FEM2D}. 
+
+@menu
+* plot::                        Plot model or boundary conditions
+* fill::                        Fill plot model
+* window::                      Set view dimensions for window
+* find::                        Reset view window to full model
+* zoom::                        Expand or shrink view
+* move::                        Move view window
+* clear::                       Clear view window
+* show::                        Show me
+* hard::                        Let's see that on paper
+* color::                       So you don't like my default colors
+@end menu
+
+@node plot, fill, Graphic Commands, Graphic Commands
+
+@deffn Command plot
+@deffnx Command plot "model"
+@cindex Model plot
+
+@code{plot} will plot the nodes and elements of the model.  If no arguments
+are specified then the model will be plotted.
+
+@deffnx Command plot "deform" scale
+@cindex Deformed model plot
+@cindex Deformation scale
+
+If @code{deform} is
+specified for the first argument then displacements (actually, any solution
+with two degrees of freedom will be treated as displacements by this
+command, so beware) are added to the nodal coordinates.  Optionally, a
+third argument specifies a deformation @var{scale} which by default is 1
+(giving actually deformation). 
+
+@example
+'plot(deform,2.0)'
+@end example
+
+@deffnx Command plot "bcs"
+@cindex Plotting boundary conditions
+
+If @code{bcs} is specified for the first
+argument then all boundary conditions are plotted.  
+
+@example
+'plot(bcs)'
+@end example
+
+@deffnx Command plot "bound"
+@cindex Free boundaries
+
+If @code{bound} is used
+then free boundaries (unconnected element edges) will be highlighted.  The
+last option is useful for determining if any nodes need to be equivalenced
+(@pxref{Equ2D}).  
+
+@example
+'plot(bound)'
+@end example
+
+@deffnx Command plot "result" fun comb rmin rmax
+@cindex Results
+
+If @code{result} is specified for the first argument then contour lines will 
+be plotted with a color dependent on the results (given by the function name,
+@var{fun}) calculated by the post-processor (@pxref{Post2D}).  Additional
+arguments may be given to indicate how to combine the results within an
+element and to give the range of result values.  Result combination
+(@var{comb}) may be specified as @code{max}, @code{min}, @code{ave} or an
+integer.  These options will give either the maximum, minimum or average
+value of the results calculated within each element respectively.  If an
+integer value (> 0) is given for @var{comb} then each element is subdivided
+into equal regions each of which are contoured according to the interpolated
+result at the center of the subregion.  Since result interpolation is used
+in this option results must have been processed at the nodes
+(@pxref{Results Processing,,Results Processing - select}).  
+If this argument is not specified then @code{max} is
+assumed.  Finally, a range of values may be given by specifying the minimum
+(@var{rmin}) and maximum (@var{rmax}) result values.  If not given then the
+range is set to include the the full range of values calculated by the
+post-processor.
+
+@example
+'plot(result,temp,ave,0.0,100.0)'
+'plot(result,sigd,4)'
+@end example
+
+@deffnx Command plot "vector" fun1 fun2 subd rmin rmax
+@cindex Plotting results
+@cindex Material boundaries
+
+If @code{vector} is specified for the first argument then
+results will be plotted within each element.  The first result function
+specified (@var{fun1}) is assumed to be a magnitude with the second
+(@var{fun2}) assumed to define a direction.  The combination of these two
+results are plotted as vectors with corresponding magnitude (indicated by
+color) and direction.  The specified result functions must have been
+previously processed (@pxref{Post2D}).  A direction result is assumed to
+have units of degrees (such as would be returned by the @code{atan} builtin
+function, @pxref{Utility Commands,,Utility Commands - set}).  
+If an element subdivision (@var{subd}) is given
+and the results were processed at the nodes 
+(@pxref{Results Processing,,Results Processing - select}) 
+then each
+element is subdivided into equal regions each of which will have a vector
+plotted at the centroid corresponding to the interpolated result at that
+location.  If results were processed at the Gaussian quadrature points then
+vectors will only be plotted at those points within each element (and this
+argument will be ignored.  If this argument is not specified then 0 is
+assumed.  Finally, a range of values may be given by specifying the minimum
+(@var{rmin}) and maximum (@var{rmax}) result values.  If not given then the
+range is set to include the the full range of values processed.
+
+@example
+'set flux=-c1*(x1*x1+y1*y1)^0.5'
+'set fdir=atan(y1,x1)'
+        .
+        .
+        .
+--- run Post2D ---
+        .
+        .
+        .
+'plot(vector,flux,fdir,2)'
+@end example
+@end deffn
+
+@node fill, window, plot, Graphic Commands
+
+@deffn Command fill
+@deffnx Command fill "model"
+@cindex Model filled plot
+@cindex Material
+
+@code{fill} will plot the elements of the model and fill them with a color
+dependent on the material assigned to the element or results computed.  If
+no arguments are specified then the model will be plotted.  
+
+@deffnx Command fill "deform" scale
+@cindex Deformed model filled plot
+@cindex Deformation scale
+
+If @code{deform} is specified for the first argument then displacements
+(actually, any solution with two degrees of freedom will be treated as
+displacements by this command, so beware) are added to the nodal
+coordinates.  Optionally, an additional argument specifies a deformation
+@var{scale} which by default is 1 (giving actually deformation). 
+
+@example
+'fill(deform,2.0)'
+@end example
+
+@deffnx Command fill "result" fun comb rmin rmax
+@cindex Results
+
+If @code{result} is specified for the first argument then the elements will be
+filled with a color dependent on the results (given by the function name,
+@var{fun}) calculated by the post-processor (@pxref{Post2D}).  Additional
+arguments may be given to indicate how to combine the results within an
+element and to give the range of result values.  Result combination
+(@var{comb}) may be specified as @code{max}, @code{min}, @code{ave} or an
+integer.  These options will give either the maximum, minimum or average
+value of the results calculated within each element respectively.  If an
+integer value (> 0) is given for @var{comb} then each element is subdivided
+into equal regions each of which are filled according to the interpolated
+result at the center of the subregion.  Since result interpolation is used
+in this option results must have been processed at the nodes
+(@pxref{Results Processing,,Results Processing - select}).  
+If this argument is not specified then @code{max} is
+assumed.  Finally, a range of values may be given by specifying the minimum
+(@var{rmin}) and maximum (@var{rmax}) result values.  If not given then the
+range is set to include the the full range of values calculated by the
+post-processor.
+
+@example
+'fill(result,temp,ave,0.0,100.0)'
+'fill(result,sigd,4)'
+@end example
+@end deffn
+
+@node window, find, fill, Graphic Commands
+
+@deffn Command window xmin xmax ymin ymax
+@cindex World coordinates
+
+@code{window} is used to specify world coordinates for the window.  The 
+arguments are the minimum x (@var{xmin}), maximum x (@var{xmax}), minimum y 
+(@var{ymin}) and maximum y (@var{ymax}) coordinates in that order.
+
+@example
+'window(-10.0,20.0,0.0,30.0)'
+@end example
+@end deffn
+
+@node find, zoom, window, Graphic Commands
+
+@deffn Command find
+@cindex Reset window
+
+@code{find} will reset the window to include the full model. The
+model will be replotted. There are no arguments to @code{find}.
+@end deffn
+
+@node zoom, move, find, Graphic Commands
+
+@deffn Command zoom factor
+@cindex Window size
+
+@code{zoom} will increase or decrease the window size dependent on
+the specified @var{factor}. A value of one will cause no change. Values less
+than one will shrink the window (zoom in) whereas values greater than one
+will expand the window (zoom out).
+
+@example
+'zoom(0.5)'
+@end example
+@end deffn
+
+@node move, clear, zoom, Graphic Commands
+
+@deffn Command move xfract yfract
+@cindex Window shift
+
+@code{move} is used to move the window along the x and y directions.  The
+arguments specify the x and y move in terms of window view fraction
+(@var{xfract}, @var{yfract}).  Values of zero cause no change for that
+direction.  A value of one will cause a shift of a full window view width or
+height (depending on the direction specified) in the positive direction
+(right or up).
+
+@example
+'move(-.5,0.0)'
+@end example
+@end deffn
+
+@node clear, show, move, Graphic Commands
+
+@deffn Command clear
+
+@code{clear} will clear the window view. There are no arguments to @code{clear}.
+@end deffn
+
+@node show, hard, clear, Graphic Commands
+
+@deffn Command show
+@deffnx Command show "node" n flag
+@deffnx Command show "elem" n flag
+@deffnx Command show "group" name
+
+@code{show} will plot (in complementary mode) the requested item(s).  If
+@var{flag} is set to @code{1} then the corresponding node or element
+identification number (@var{n}) will be plotted next to the item.  If the
+@code{group} option is specified all nodes in the group (specified by
+@var{name}) will be plotted.
+
+@example
+'show(group,part)'
+@end example
+@end deffn
+
+@node hard, color, show, Graphic Commands
+
+@deffn Command hard file
+@cindex Postscript
+@cindex Hardcopy
+
+@code{hard} initiates and terminates hardcopy output.  When first issued a
+@var{file} will be opened for writing hardcopy output.  Subsequent plot 
+(@pxref{Graphic Commands,,Graphic Commands - plot}) 
+and fill 
+(@pxref{Graphic Commands,,Graphic Commands - fill}) 
+commands issued will result in hardcopy output. Color Postscript commands are 
+used as the output format and should result in a complete Postscript file 
+readable by any Postscript capable software.  If @code{hard} is issued again, 
+hardcopy output will be closed allowing for multiple hardcopy invocations in 
+any session.
+
+@example
+'hard(ram:model.ps)'
+@end example
+@end deffn
+
+@node color, (dir), hard, Graphic Commands
+
+@deffn Command color id R G B
+@cindex Color setting
+
+@code{color} allows for the specification of the output color
+spectrum.  The first argument (@var{id}) is the identification number of the 
+color to be changed (1-12 inclusive).  The subsequent arguments (@var{R}, 
+@var{G}, @var{B}) are integers between the values 0 and 15 (inclusive).
+
+@example
+'color(4,10,5,8)'
+@end example
+@end deffn
+
+@node Example Problem
+@chapter Example Problem
+
+The following macro is included as a simple example to illustrate the
+use of an @code{Rexx} macro to generate a model. The advantages of using
+an @code{Rexx} macro are ease of debugging and the use of parametric
+variation to name a couple. This macro can be executed as any @code{Rexx}
+macro and will produce a model file ready to be solved by @code{Lin2D}.
+@code{FEM2D} is automatically invoked, by the macro, if it is not already
+running.
+
+@example
+/* simple beam */
+options results
+
+address fem2d
+
+h = 0.5
+L = 10.0
+E = 10.0e6
+nu = 0.3000
+
+reset
+problem 'struct'
+plane
+iso 1 E nu
+do i=0 to 20
+    xx = L*i/20
+    node i+1 xx 0.0
+    node i+31 xx h
+end
+do i=0 to 19
+    quad4 i+1 1 i+1 i+2 i+32 i+31
+end
+dispx 1 0.0
+dispy 1 0.0
+dispx 31 0.0
+dispy 31 0.0
+forcy 51 (-100.0)
+check
+say result
+save 'beam.dat'
+exit
+@end example
+
+@node References
+@chapter References
+
+@enumerate
+@item
+Hawes, William S., @emph{Rexx User's Reference Manual}
+@item
+Becker, Eric B., Carey, Graham F., Oden, J. Tinsley, @emph{Finite
+Elements, An Introduction}, Volume 1, Prentice-Hall Inc., 1981
+@item
+Zienkiewicz, O.C., Taylor, R.L., @emph{The Finite
+Element Method}, Volumes 1 & 2, Fourth Edition, McGraw-Hill Book Company, 1991
+@item
+Schildt, H., @emph{C, The Complete Reference},
+Second Edition, Osborne McGraw-Hill, 1990
+@end enumerate
+
+@node Acknowledgments
+@chapter Acknowledgments
+@cindex University of Texas at Austin
+
+I would like to acknowledge Dr.  Eric Becker and Dr.  Linda Hayes, of
+the Aerospace Engineering and Engineering Mechanics Department of The
+University of Texas at Austin, for passing on the knowledge of the finite
+element method directly and indirectly through course work and research
+assistance.  It is this knowledge that made possible the development of
+@code{Lin2D} and @code{Nln2D}.  In fact, both codes started out as course
+term projects directed by Dr.  Hayes and Dr.  Becker.
+
+@node Lin2D
+@appendix Lin2D
+
+@ifinfo
+Lin2D - a linear solver for ``plane'' and axisymmetric two dimensional
+finite element analysis problems.
+
+Copyright @copyright{} 1992-2009 by Russell Leighton
+
+date:    Mar 20, 1993
+version: 1.0
+@end ifinfo
+
+@menu
+* Introduction to Lin2D::       A brief encounter
+* Model Requirements::          Modeling specifics
+@end menu
+
+@node Introduction to Lin2D
+@appendixsec Introduction to Lin2D
+
+@code{Lin2D} is a general linear solver developed to handle ``plane''
+and axisymmetric two dimensional finite element analysis problems. It is a
+fairly general capability in the sense that a wide variety of two
+dimensional problems can be handled by @code{Lin2D} limited only by
+computational resources. Specific attention was given to efficient memory
+and resource management, however, the minimum recommended amount of memory
+needed to solve moderate problems, using @code{Lin2D}, is 6 megabytes
+(although simple problems can be run with considerably less). A hard disk
+is also recommended.
+
+It is important to note that any engineer, planning to use a finite
+element code for actual application, understand fully the concepts and
+implementation of the finite element method. Therefore, the prospective
+user should consider an in-depth study of the method and ideally some
+training. This document should not be considered appropriate for training
+users in the use of the finite element method.
+
+The main features of @code{Lin2D} are as follows:
+
+@itemize @bullet
+@item runs as a background task
+@item two-dimensional plane or axisymmetric problems
+@item linear and quadratic elements available
+@item no limit on number of nodes, elements, materials, or boundary
+conditions (only limited by memory)
+@item no need to specify problem size (determined at run time)
+@item choice of Dirichlet (constraint) or Neumann (flux), point or distributed
+boundary conditions
+@item symmetric banded matrix storage format
+@end itemize
+
+In general the command line syntax for executing @code{Lin2D}:
+
+@example
+    -> [run] Lin2D [@var{file}]
+@end example
+
+@noindent
+where @var{file} is the name of an input file to be processed.
+
+@node Model Requirements
+@appendixsec Model Requirements
+
+The constitutive law implemented in @code{Lin2D} (relating stress and
+strain in structural problems, for example) consists of a linear matrix
+operator with up to ten independent constants. These constants are input
+in the @code{mat} command in @code{FEM2D} as the material coefficients.
+For structural problems the components of stress and strain, relevant to
+plane or axisymmetric problems, are the three normal components plus the
+in-plane shear component. This requires that the material matrix operator
+be a four by four matrix. This results in sixteen constants but, due to
+elastic symmetry, only ten of these constants are independent. The
+material coefficients allow for specification of materials ranging from
+isotropic (properties invariant to material direction) to monoclinic
+(properties symmetric about one plane). The coefficients are specified in
+diagonal order and the matrix is symmetric. In other words, if the
+coefficients are arranged in matrix form they would appear as follows.
+
+@example 
+@group
+            C0  C4  C7  C9
+            C4  C1  C5  C8
+            C7  C5  C2  C6
+            C9  C8  C6  C3
+@end group
+@end example
+
+Body forces are also input with the @code{mat} command.  @code{Lin2D}
+treats the two sets of body forces differently.  The first set of body
+force terms are for body forces arising from internal energy.  For example,
+thermal strain in a material develops as a result of a change in
+temperature in the material which can be treated as a body force due to a
+change in internal energy.  In this case the body force (thermal strain) is
+computed through the following equation:
+
+@example 
+            eT[] = f1[]*(Ti - Tref)
+@end example
+
+where @code{f1[]} is the first set of body force coefficients (thermal
+coefficients of expansion, one for each geometric degree of freedom), @code{Tref}
+is the reference value (temperature), and @code{Ti} is the computed value
+(temperature found from a previous heat transfer analysis).
+
+The second set of body force terms are for body forces arising from
+potential energy such as conservative force fields (gravity or acceleration
+being an example).  Furthermore, for axisymmetric problems the radial
+component of this conservative body force is multiplied by the radial
+location.  This, for example, allows for a radial force component that
+depends on the radial acceleration arising from the steady state rotation
+of an axisymmetric body.  In this case the body forces 
+are computed through the following equations:
+
+@example 
+            F[r] = f2[r]*r^2*density
+            F[a] = f2[a]*r*density
+@end example
+
+where @code{f2[r]} is the first (radial) body force coefficient in the
+second set (representing the angular velocity), @code{f2[a]} is the second
+(axial) coefficient (which represents an axial acceleration), @code{r} is
+the radial location, and @code{density} may be either a constant (input by
+specifying a negative reference value) or a computed value (obtained from a
+previous diffusion analysis and setting the reference value to zero).
+
+@code{formkf} forms the stiffness matrix and load vector.  The stiffness
+matrix and load vector are assembled from the individual element
+contributions which results in a linear system of equations to be
+subsequently solved.  The only argument to this command is a print flag
+(@var{iprint}).  A value of 1 indicates that the stiffness matrix and load
+vector will be printed to the standard output.  This is not recommended for
+problems resulting in large systems.  A value of 0 will result in no
+matrix/vector output (the default setting).
+
+@code{solve} will attempt to solve the system assembled using the
+@code{formkf} command. Simple checks of the model are
+performed at various stages, but this does not insure that the system can
+be solved.  The user must pay special attention to correctness of model
+geometry and boundary conditions.  If the system is not solvable it is most
+probably due to errors in the geometry and/or boundary conditions.  The
+only argument to this command is a print flag (@var{iprint}).  A value of 1
+indicates that the solution vector will be printed to the standard output.
+This is not recommended for large problems.  A value of 0 will result in no
+solution output (the default setting).
+
+@node Nln2D
+@appendix Nln2D
+
+@ifinfo
+Nln2D - a nonlinear solver for ``plane'' and axisymmetric two dimensional
+finite element analysis problems.
+
+Copyright @copyright{} 1993-2009 by Russell Leighton
+
+date:    Jul 4, 1993
+version: 1.0
+@end ifinfo
+
+This solver is equivalent to @code{Lin2D} except that it is restricted --
+results are only valid for -- structural analysis problems where large
+displacements (and/or rotations) are expected, but small strain theory
+still applies. A good example would be the large deflection of a thin
+cantilever beam. The functional difference between @code{Nln2D} and
+@code{Lin2D} is the solution process. The first iteration through
+@code{formkf} and @code{solve} will result in a linear solution (equivalent
+to the solution given by @code{Lin2D}). Subsequent executions of
+@code{formkf} and @code{solve} will produce results that represent a lower
+total energy state (the internal energy approaches the external energy of
+the system). After ``enough'' iterations have been performed the total
+energy should be zero (that is an equilibrium state should have been
+reached). The command @code{formkf} returns the maximum (absolute value)
+nodal residual force in the system. This value can be checked against a
+tolerance value (typically around 0.01, but depends on loading conditions)
+as a stopping criteria. Also, the @code{solve} command returns the maximum
+(absolute value) change in nodal displacement. This value may also be
+checked against a tolerance value (typically around 0.0001) as a stopping
+criteria. The following is an example script showing a solution procedure.
+
+@example
+/* example script for nln2d */
+options results
+
+address nln2d 'read(ram:temp.dat)'
+
+do i=0 to 20
+    address nln2d 'formkf'
+    address nln2d 'solve'
+    parse var result du
+    if du < 1e-4 then leave
+end
+
+address nln2d 'save(ram:temp.dat)'
+exit
+@end example
+
+This code can be more effectively used when run in conjunction with
+@code{FEM2D}. For instance, intermediate results can be viewed graphically
+thereby given a visual indication of solution convergence. It is even
+possible (and often desirable) to assemble an animation consisting of these
+intermediate results. This animation would show, very effectively, the
+convergence process. 
+
+Also, convergence of the solution may require incremental loading which can
+be accomplished with the aid of @code{FEM2D}. This would be done by
+applying a fraction of the appropriate load(s), performing an iterative
+solution with @code{Nln2D} until convergence, then increasing the load
+fraction using @code{FEM2D} and repeating the solution procedure. This
+whole process is repeated until the full load is reached.
+
+Currently, only a linear elastic stress-strain material law is implemented
+thereby restricting problems to those where small strains are expected.
+However, future additional material constitutive laws will be implemented
+thereby extending the code applicability to more general nonlinear
+problems.
+
+@node Post2D
+@appendix Post2D
+
+@ifinfo
+Post2D - a post processor for two dimensional
+finite element analysis problems.
+
+Copyright @copyright{} 1993,1994 by Russell Leighton
+
+date:    Feb 17, 1994
+version: 1.0
+@end ifinfo
+
+@code{Post2D} is a general two dimensional finite element solution
+post-processor. In general the command line syntax for executing @code{Post2D}:
+
+@example
+    -> [run] Post2D [@var{file}]
+@end example
+
+@noindent
+where @var{file} is the name of an input file to be processed.
+
+Given a solution calculated by a solver (@pxref{Lin2D} and @ref{Nln2D})
+@code{Post2D} will post-process the solution for all selected
+(@pxref{Results Processing,,Results Processing - select}) functions 
+(@pxref{Utility Commands,,Utility Commands - set}) over the complete model.
+
+@node Equ2D
+@appendix Equ2D
+
+@ifinfo
+Equ2D - a node equivalencing program for 2D FE meshes.
+
+Copyright @copyright{} 1993,1994 by Russell Leighton
+
+date:    Jan 21, 1993
+version: 1.0a
+@end ifinfo
+
+Given a two-dimensional finite element mesh (stored in the IFF format
+currently used by @code{FEM2D}) @code{Equ2D} will equivalence nodes that
+fall within a specified tolerance apart. Either an inclusion or exclusion
+node group may be given to restrict the equivalence operation.
+
+The equivalence operation is typically used as a modeling tool to
+``weld'' separate parts together or to close gaps. 
+
+The command line syntax for @code{Equ2D} is:
+
+@example
+    -> [run] equ2d [-i@var{group}] [-x@var{group}] [-t@var{tol}] <@var{input}> [@var{output}]
+@end example
+
+@noindent
+where @var{input} is the input data file containing the finite element data
+(in the form produced by the save command in @code{FEM2D}). This input data
+file is a required argument. The output data file, if specified, will be
+the name of the file that will contain the equivalenced finite element
+data. If not specified then the data will be written back to the input
+file (thereby overwriting the previous data). If the @code{-i} option is
+used then @var{group} specifies the group containing the nodes to be
+included in the equivalence search. Likewise, if the @code{-x} option is
+used then @var{group} specifies the group containing nodes to be excluded
+from the equivalence search. If the @code{-t} option is given then
+@var{tol} specifies the tolerance to be used to determine equivalence (the
+default is 1.0e-5).
+
+@node Opt2D
+@appendix Opt2D
+
+@ifinfo
+Opt2D - a 2D finite element mesh optimization program.
+
+Copyright @copyright{} 1992,1993,1994 by Russell Leighton
+
+date:    Aug 5, 1992
+version: 1.0a
+@end ifinfo
+
+@code{Opt2D} is a node order optimization program for arbitrary two
+dimensional finite element meshes. The algorithm used to optimize the mesh
+is fairly simplistic but may result in a smaller bandwidth for some
+problems. For simple rectangular meshes, if the node ordering is
+consistent, then @code{Opt2D} will probably give a node ordering with a
+bandwidth that is larger than the original. However, for irregular meshes,
+very high aspect ratio meshes, or inconsistently ordered meshes,
+@code{Opt2D} can reduce the bandwidth significantly. A side effect of
+@code{Opt2D} is that all unreferenced nodes will be removed resulting in a
+further reduction in model size and memory requirements.
+
+The command line syntax for @code{Opt2D} is:
+
+@example
+    -> [run] opt2d [-n@var{element}] <@var{input}> [@var{output}]
+@end example
+
+@noindent
+where @var{input} is the input data file containing the finite element data
+(in the form produced by the save command in @code{FEM2D}). This input data
+file is a required argument. The output data file, if specified, will be
+the name of the file that will contain the optimized finite element data.
+If not specified then the optimized data will be written back to the input
+file (thereby overwriting the previous data). If the @code{-n} option is
+used then @var{element} specifies the identification number of the element
+where the optimization search is to begin. Proper selection of the
+starting element can dramatically improve the resulting optimization.
+
+@node Rem2D
+@appendix Rem2D
+
+@ifinfo
+Rem2D - a 2D finite element node removal program.
+
+Copyright @copyright{} 1993,1994 by Russell Leighton
+
+date:    Oct 27, 1993
+version: 1.0a
+@end ifinfo
+
+@code{Rem2D} is a simple code to remove all unreferenced nodes from a model
+resulting in a reduction in model size and memory requirements without a
+reordering of the node numbers.
+
+The command line syntax for @code{Rem2D} is:
+
+@example
+    -> [run] rem2d <@var{input}> [@var{output}]
+@end example
+
+@noindent
+where @var{input} is the input data file containing the finite element data
+(in the form produced by the save command in @code{FEM2D}). This input data
+file is a required argument. The output data file, if specified, will be
+the name of the file that will contain the optimized finite element data.
+If not specified then the optimized data will be written back to the input
+file (thereby overwriting the previous data). 
+
+@node Concept Index
+@unnumbered Concept Index
+
+@printindex cp
+
+@node Command Index
+@unnumbered Command Index
+
+@printindex fn
+
+@contents
+@bye
