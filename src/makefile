@@ -16,4 +16,4 @@ clean:
 	cd equ2d; make clean
 	cd opt2d; make clean
 	cd rem2d; make clean
-	rm hash/hash
+	rm -f hash/hash

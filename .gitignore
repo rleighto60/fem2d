@@ -1,0 +1,13 @@
+**/*~
+**/*.o
+**/*.aux
+**/*.cp
+**/*.cps
+**/*.fn
+**/*.fns
+**/*.log
+**/*.pdf
+**/*.toc
+bin/*
+src/fem2d/hash.h
+src/hash/hash

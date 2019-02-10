@@ -51,4 +51,4 @@ freemem.o: ../common/header.h ../common/freemem.c
 		$(CC) -c -DNLN2D -I../common -o freemem.o ../common/freemem.c
 
 clean:
-		rm *.o
+		rm -f *.o

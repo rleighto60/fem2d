@@ -57,4 +57,4 @@ freemem.o: ../common/header.h ../common/shapes.h ../common/freemem.c
 		$(CC) -c -I../common -o freemem.o ../common/freemem.c
 
 clean:
-		rm *.o hash.h
+		rm -f *.o hash.h

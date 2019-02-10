@@ -20,4 +20,4 @@ freemem.o: ../common/header.h ../common/freemem.c
 		$(CC) -c -DEQU2D -I../common -o freemem.o ../common/freemem.c
 
 clean:
-		rm *.o
+		rm -f *.o
