@@ -1,12 +1,8 @@
 #
-nlbeam.dat:  nlbeam.rexx
-	../bin/fem2d nlbeam.rexx
+default: nlbeam.dat rotate.dat srm4seg.dat
 
-rotate.dat:  rotate.rexx
-	../bin/fem2d rotate.rexx
-
-srm4seg.dat:  srm4seg.rexx
-	../bin/fem2d srm4seg.rexx
+%.dat:  %.rexx
+	../bin/fem2d $<
 
 clean:
 	rm -f *.dat *.ps
