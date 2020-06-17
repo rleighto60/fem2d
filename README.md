@@ -37,3 +37,8 @@ The main features of the `FEM2D` collection are as follows:
 * solvers can handle coupled analyses
 * node order optimizer for bandwidth reduction
 * node equivalence code for part "welding"
+
+## Prerequisites
+
+* [The Regina REXX interpreter - version 3.9.1](https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.1/)
+  * [development files](https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.1/)
