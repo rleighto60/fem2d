@@ -1,5 +1,7 @@
 # FEM2D
 
+![intro](fem2d-srm4seg.png)
+
 ## Introduction
 
 `FEM2D` forms the core of a collection of codes developed to perform
