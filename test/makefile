@@ -1,5 +1,5 @@
 #
-default: nlbeam.dat rotate.dat srm4seg.dat
+default: nlbeam.dat plate.dat rotate.dat srm4seg.dat
 
 %.dat:  %.rexx
 	PATH=../bin fem2d $<
