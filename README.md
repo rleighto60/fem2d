@@ -45,3 +45,7 @@ The main features of the `FEM2D` collection are as follows:
 * [The Regina REXX interpreter - regina-rexx version 3.9.3](https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.3/)
   * [development files - libregina3-dev](https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.3/)
 * [Optional] - [Texinfo](https://www.gnu.org/software/texinfo/)
+
+## Documentation
+
+![User Guide](fem2d.pdf)
