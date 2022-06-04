@@ -48,4 +48,4 @@ The main features of the `FEM2D` collection are as follows:
 
 ## Documentation
 
-![User Guide](fem2d.pdf)
+![User Guide](doc/fem2d.pdf)
