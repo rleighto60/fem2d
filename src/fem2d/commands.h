@@ -84,7 +84,7 @@ extern void filldeform(float,FILE *);
 extern void fillelem(int,float,int,FILE *);
 extern void fillmodel(FILE *);
 extern void fillresult(int,int,int,float,float,FILE *);
-extern void findwindow(void);
+extern void findwindow(int);
 extern void freemem();
 extern void plot(float,float,int,FILE *);
 extern void plotbound(void);

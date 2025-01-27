@@ -60,7 +60,7 @@ void fillelem(int,float,int,FILE *);
 void fillmodel(FILE *);
 void fillpoly(int,float *,float *,int,FILE *);
 void fillresult(int,int,int,float,float,FILE *);
-void findwindow(void);
+void findwindow(int);
 void hardcol(int,int,FILE *);
 void ifillelem(int,int,float *,float *,FILE *);
 void ifillplot(long,long,int,FILE *);

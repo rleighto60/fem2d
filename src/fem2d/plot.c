@@ -91,7 +91,7 @@ void clearwindow(FILE *hfp)
 
 /*  findwindow   - set window bounds to include complete model      */
 
-void findwindow()
+void findwindow(int n)
 {
     float tol=1.e-5;
     float dx,dy;
@@ -107,12 +107,14 @@ void findwindow()
             view.xmax = MAX(nodes[i].x,view.xmax);
             view.ymax = MAX(nodes[i].y,view.ymax);
         }
-        for (i=0;i<npnts;i++) {
-            if ((points[i].type == 0) || (points[i].col == 0)) continue;
-            view.xmin = MIN(points[i].x,view.xmin);
-            view.ymin = MIN(points[i].y,view.ymin);
-            view.xmax = MAX(points[i].x,view.xmax);
-            view.ymax = MAX(points[i].y,view.ymax);
+        if (n > 1) {
+            for (i=0;i<npnts;i++) {
+                if ((points[i].type == 0) || (points[i].col == 0)) continue;
+                view.xmin = MIN(points[i].x,view.xmin);
+                view.ymin = MIN(points[i].y,view.ymin);
+                view.xmax = MAX(points[i].x,view.xmax);
+                view.ymax = MAX(points[i].y,view.ymax);
+            }
         }
     }
     else view.xmin = view.xmax = view.ymin = view.ymax = 0.0;
@@ -900,6 +902,11 @@ void plotmodel(FILE *hfp)
     }
     for (n=0;n<nnodes;n++) {
         if (nodes[n].id < 0) plotnode(n,0,2,hfp);
+    }
+    sprintf((char *)itext,"Model");
+    if (hfp) {
+        fprintf(hfp,"%d %d m\n", 12, HEIGHT-12);
+        fprintf(hfp,"(%s) tt\n",itext);
     }
 }
 

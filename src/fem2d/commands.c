@@ -683,7 +683,7 @@ void _com_stop(int argn, char *argv[])
 void _com_version(int argn, char *argv[])
 {
     sprintf(field,"FEM2D - version: %s - date: %s - time: %s",VERSION,__DATE__,__TIME__);
-    sprintf(field,"%s\nCopyright © 1993-2009 - Russell Leighton",field);
+    sprintf(field,"%s\nCopyright ï¿½ 1993-2009 - Russell Leighton",field);
 }
 
 /* info */
@@ -1353,10 +1353,10 @@ void _com_coord(int argn, char *argv[])
 void _com_grid(int argn, char *argv[])
 {
 }
-/* find */
+/* find(all) */
 void _com_find(int argn, char *argv[])
 {
-    findwindow();
+    findwindow(argn);
 }
 /* zoom(factor) */
 void _com_zoom(int argn, char *argv[])
